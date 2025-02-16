@@ -2,76 +2,80 @@ import speech_recognition as sr
 import pyttsx3
 from datetime import datetime
 
-# Initialize speech engine
+
 try:
     engine = pyttsx3.init()
 except Exception as e:
     print(f"Error initializing pyttsx3: {e}")
-    exit(1)
+    engine = None  # Allow script to continue even if TTS fails
 
 
 def speak(text):
     """Convert text to speech"""
-    engine.say(text)
-    engine.runAndWait()
+    if engine:
+        engine.say(text)
+        engine.runAndWait()
+    else:
+        print(f"SPEAK: {text}")  # Fallback if TTS is unavailable
 
 
-def recognize_speech(prompt, timeout=5):
-    """Recognize speech from microphone and return text"""
+def recognize_speech(prompt, timeout=5, retries=3):
+    """Recognize speech from the microphone and return cleaned text"""
     recognizer = sr.Recognizer()
 
-    with sr.Microphone() as source:
-        speak(prompt)
-        print(prompt + " (Speak now...)")
-        recognizer.adjust_for_ambient_noise(source)
-        try:
-            audio = recognizer.listen(source, timeout=timeout)
-        except sr.WaitTimeoutError:
-            print("No speech detected. Please try again.")
-            return recognize_speech(prompt, timeout)  # Retry if no speech is detected
+    for attempt in range(retries):
+        with sr.Microphone() as source:
+            speak(prompt)
+            print(prompt + " (Speak now...)")
+            recognizer.adjust_for_ambient_noise(source)
 
-        try:
-            text = recognizer.recognize_google(audio).lower().strip()  # Convert to lowercase and strip spaces
-            print(f"Recognized: {text}")
-            return text
-        except sr.UnknownValueError:
-            print("Could not understand the audio. Please try again.")
-            return recognize_speech(prompt, timeout)  # Retry if speech is not clear
-        except sr.RequestError:
-            print("Speech Recognition service unavailable.")
-            return "error"
+            try:
+                audio = recognizer.listen(source, timeout=timeout)
+                text = recognizer.recognize_google(audio).strip()
+                print(f"Recognized: {text}")
+                return text
+            except sr.WaitTimeoutError:
+                print("No speech detected. Please try again.")
+            except sr.UnknownValueError:
+                print("Could not understand the audio. Please try again.")
+            except sr.RequestError:
+                print("Speech Recognition service unavailable.")
+                return "error"
 
-
-def validate_phone_number(phone_number):
-    """Validate if the phone number is numeric and has 10 digits"""
-    return phone_number.isdigit() and len(phone_number) == 10
+    speak("Too many failed attempts. Moving to the next step.")
+    return "error"
 
 
-# Asking for inputs
+# Collecting user details
 name = recognize_speech("Please say your name")
 purpose = recognize_speech("Please say your purpose")
-
-while True:
-    phone_number = recognize_speech("Please say your phone number")
-    if validate_phone_number(phone_number):
-        break
-    else:
-        speak("Invalid phone number. Please say a 10-digit number.")
+phone_number = recognize_speech("Please say your phone number")  # No validation
 
 # Get current date and time
 current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-# Confirmation Loop (Wait until user gives a valid response)
+# Confirmation via Console Input
 while True:
-    confirmation = recognize_speech("Would you like to confirm? Say yes or no").lower()
+    speak("Type yes to confirm and no to reject.")
+    confirmation = input("Would you like to confirm? Type 'yes' to confirm or 'no' to cancel: ").strip().lower()
 
-    if confirmation in ["yes", "yeah", "confirm", "okay", "s"]:
-        speak("Thank you. Your form has been recorded on " + current_datetime)
+    if confirmation in {"yes", "y"}:
+        speak(f"Thank you. Your form has been recorded on {current_datetime}")
         print("\n✅ Form successfully submitted!")
-        break  # Exit loop on confirmation
-    elif confirmation in ["no", "cancel", "not now", "exit", "quit"]:
+
+        # Display recorded details
+        print("\n📋 **Submitted Details:**")
+        print(f"📝 Name      : {name}")
+        print(f"🎯 Purpose   : {purpose}")
+        print(f"📞 Phone No  : {phone_number}")
+        print(f"📅 Timestamp : {current_datetime}\n")
+
+        break
+
+    elif confirmation in {"no", "n"}:
         speak("Form submission canceled. Restart if you want to try again.")
         print("\n❌ Form not submitted.")
-        break  # Exit loop if the user cancels
+        break
+
     else:
-        speak("I didn't understand. Please say yes or no.")  # Repeat prompt if unclear
+        print("Invalid input. Please type 'yes' or 'no'.")
