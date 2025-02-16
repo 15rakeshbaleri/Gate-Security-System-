@@ -1,8 +1,10 @@
 import speech_recognition as sr
 import pyttsx3
+import csv
 from datetime import datetime
+import os
 
-
+# Initialize Text-to-Speech Engine
 try:
     engine = pyttsx3.init()
 except Exception as e:
@@ -70,6 +72,17 @@ while True:
         print(f"📞 Phone No  : {phone_number}")
         print(f"📅 Timestamp : {current_datetime}\n")
 
+        # Save data to CSV
+        csv_file = "visitor_data.csv"
+        file_exists = os.path.isfile(csv_file)
+
+        with open(csv_file, mode="a", newline="") as file:
+            writer = csv.writer(file)
+            if not file_exists:
+                writer.writerow(["Name", "Purpose", "Phone Number", "Timestamp"])
+            writer.writerow([name, purpose, phone_number, current_datetime])
+
+        print("✅ Data successfully saved to CSV.")
         break
 
     elif confirmation in {"no", "n"}:
