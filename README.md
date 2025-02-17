@@ -4,6 +4,13 @@
 This project is an **AI-powered smart gate security system** that automates the entry process for pedestrians and vehicles using **Face Recognition, Car Plate Detection, and AI Voice Assistance**. The system ensures **fast, secure, and automated** access for employees and visitors.
 
 ---
+## 📽 Demo Video
+Watch the project in action:
+[![Watch Video](https://drive.google.com/file/d/1_CzDhQ6jDR8dwGxJBBKnmOn-gKElBC7h/view?usp=sharing)
+
+🔗 **Click [here](https://drive.google.com/file/d/1_CzDhQ6jDR8dwGxJBBKnmOn-gKElBC7h/view?usp=sharing) to watch the full video**
+
+---
 ## 🔧 Modules & Features
 
 ### 1️⃣ Face Recognition (For Walk-in Visitors)
